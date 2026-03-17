@@ -1,0 +1,192 @@
+:root {
+  font-family: "Segoe UI", sans-serif;
+  color: #0f172a;
+  background:
+    radial-gradient(circle at top left, rgba(14, 165, 233, 0.22), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(249, 115, 22, 0.18), transparent 28%),
+    #f8fafc;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.page-shell {
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 3rem 0 4rem;
+}
+
+.hero {
+  padding: 2rem;
+  border-radius: 28px;
+  color: #eff6ff;
+  background: linear-gradient(135deg, #0f172a, #0f766e 55%, #ea580c);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.2);
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  opacity: 0.72;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 6vw, 4.75rem);
+  line-height: 0.95;
+}
+
+.hero-copy {
+  max-width: 48rem;
+  margin: 1rem 0 1.5rem;
+  font-size: 1.05rem;
+}
+
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.hero-meta span {
+  padding: 0.6rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.92rem;
+}
+
+.status-grid,
+.content-grid {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.status-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.content-grid {
+  grid-template-columns: 1.1fr 0.9fr;
+}
+
+.status-card,
+.panel {
+  padding: 1.4rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  backdrop-filter: blur(12px);
+}
+
+.status-card.ready {
+  border-color: rgba(22, 163, 74, 0.28);
+}
+
+.status-card.error {
+  border-color: rgba(220, 38, 38, 0.28);
+}
+
+.panel-header h2,
+.status-card h2,
+.job-card h3,
+.link-item h3,
+.empty-state h3 {
+  margin: 0;
+}
+
+.panel-header p,
+.status-card p,
+.link-item p,
+.job-card p,
+.empty-state p {
+  margin: 0.5rem 0 0;
+  color: #475569;
+}
+
+.link-list,
+.job-list {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.2rem;
+}
+
+.link-item,
+.job-card,
+.empty-state {
+  padding: 1rem;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid rgba(203, 213, 225, 0.7);
+}
+
+.link-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.9rem;
+  align-items: start;
+}
+
+.method {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.6rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #075985;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+code {
+  display: inline-block;
+  margin-top: 0.55rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 8px;
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.job-card span {
+  display: inline-block;
+  margin-top: 0.8rem;
+  color: #0f766e;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-shell {
+    width: min(100% - 1rem, 1120px);
+    padding-top: 1rem;
+  }
+
+  .hero,
+  .status-card,
+  .panel {
+    padding: 1.15rem;
+  }
+}
