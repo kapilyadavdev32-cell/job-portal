@@ -13,3 +13,11 @@ export function registerUser(payload) {
     body: JSON.stringify(payload),
   });
 }
+
+export function fetchCurrentUser() {
+  return apiRequest("/auth/current-user");
+}
+
+export function logoutUser() {
+  return apiRequest("/auth/logout", { method: "POST" });
+}

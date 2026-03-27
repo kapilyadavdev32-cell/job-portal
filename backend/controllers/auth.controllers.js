@@ -40,10 +40,14 @@ const registerUser = asyncHandler(async (req, res) => {
   if (existedUser) {
     throw new ApiError(409, "User with email or username already exists", []);
   }
+  const allowedRoles = ["jobseeker", "recruiter", "admin"];
+  const userRole = allowedRoles.includes(role) ? role : "jobseeker";
+
   const user = await User.create({
     email,
     password,
     username,
+    role: userRole,
     isEmailVerified: false,
   });
 
@@ -106,13 +110,12 @@ const loginUser = asyncHandler(async (req, res) => {
     $or: [{ username }, { email }],
   });
 
-
-  if (!user.isEmailVerified) {
-  throw new ApiError(403, "Please verify your email first");
-}
-
   if (!user) {
     throw new ApiError(404, "User does not exist");
+  }
+
+  if (!user.isEmailVerified) {
+    throw new ApiError(403, "Please verify your email first");
   }
 
   // Compare the incoming password with hashed password

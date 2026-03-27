@@ -55,6 +55,12 @@ const getJobs = asyncHandler(async (req, res) => {
   if (req.query.experienceLevel)
     filters.experienceLevel = req.query.experienceLevel;
   if (req.query.isRemote) filters.isRemote = req.query.isRemote === "true";
+  if (req.query.q && String(req.query.q).trim()) {
+    filters.title = {
+      $regex: String(req.query.q).trim(),
+      $options: "i",
+    };
+  }
 
   const jobs = await Job.find(filters).populate("company");
   return res
