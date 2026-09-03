@@ -1,14 +1,26 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import {
-  emailVerificationMailgenContent,
-  forgotPasswordMailgenContent,
+  emailVerificationContent,
+  forgotPasswordContent,
   sendEmail,
-} from "../utils/mail.js";
+} from "../utils/email.js";
 import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/api-error.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { asyncHandler } from "../utils/async-handler.js";
+import { getAuthCookieOptions } from "../utils/cookies.js";
+
+/** Public URL for the verify-email link (email + dev fallback). Prefer VERIFY_EMAIL_BASE_URL so links work behind Vite proxy. */
+function buildEmailVerificationUrl(req, unHashedToken) {
+  const base =
+    process.env.VERIFY_EMAIL_BASE_URL?.replace(/\/+$/, "") ||
+    process.env.API_PUBLIC_URL?.replace(/\/+$/, "");
+  if (base) {
+    return `${base}/api/v1/auth/verify-email/${unHashedToken}`;
+  }
+  return `${req.protocol}://${req.get("host")}/api/v1/auth/verify-email/${unHashedToken}`;
+}
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -67,16 +79,21 @@ const registerUser = asyncHandler(async (req, res) => {
   user.emailVerificationExpiry = tokenExpiry;
   await user.save({ validateBeforeSave: false });
 
+  const verificationUrl = buildEmailVerificationUrl(req, unHashedToken);
+
   await sendEmail({
     email: user?.email,
     subject: "Please verify your email",
-    mailgenContent: emailVerificationMailgenContent(
-      user.username,
-      `${req.protocol}://${req.get(
-        "host",
-      )}/api/v1/auth/verify-email/${unHashedToken}`,
-    ),
+    content: emailVerificationContent(user.username, verificationUrl),
   });
+
+  if (process.env.NODE_ENV !== "production") {
+    console.info(
+      "\n[dev] If no verification email arrived, open this link once in your browser:\n" +
+        verificationUrl +
+        "\n",
+    );
+  }
 
   const createdUser = await User.findById(user._id).select(
     "-password -refreshToken -emailVerificationToken -emailVerificationExpiry",
@@ -134,15 +151,12 @@ const loginUser = asyncHandler(async (req, res) => {
     "-password -refreshToken -emailVerificationToken -emailVerificationExpiry",
   );
 
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-  };
+  const cookieOpts = getAuthCookieOptions();
 
   return res
     .status(200)
-    .cookie("accessToken", accessToken, options) // set the access token in the cookie
-    .cookie("refreshToken", refreshToken, options) // set the refresh token in the cookie
+    .cookie("accessToken", accessToken, cookieOpts) // set the access token in the cookie
+    .cookie("refreshToken", refreshToken, cookieOpts) // set the refresh token in the cookie
     .json(
       new ApiResponse(
         200,
@@ -163,15 +177,12 @@ const logoutUser = asyncHandler(async (req, res) => {
     { new: true },
   );
 
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-  };
+  const cookieOpts = getAuthCookieOptions();
 
   return res
     .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
+    .clearCookie("accessToken", cookieOpts)
+    .clearCookie("refreshToken", cookieOpts)
     .json(new ApiResponse(200, {}, "User logged out"));
 });
 
@@ -198,7 +209,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
   });
 
   if (!user) {
-    throw new ApiError(489, "Token is invalid or expired");
+    throw new ApiError(410, "Token is invalid or expired");
   }
 
   // If we found the user that means the token is valid
@@ -236,19 +247,63 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
   user.emailVerificationExpiry = tokenExpiry;
   await user.save({ validateBeforeSave: false });
 
+  const verificationUrl = buildEmailVerificationUrl(req, unHashedToken);
+
   await sendEmail({
     email: user?.email,
     subject: "Please verify your email",
-    mailgenContent: emailVerificationMailgenContent(
-      user.username,
-      `${req.protocol}://${req.get(
-        "host",
-      )}/api/v1/auth/verify-email/${unHashedToken}`,
-    ),
+    content: emailVerificationContent(user.username, verificationUrl),
   });
+
+  if (process.env.NODE_ENV !== "production") {
+    console.info("\n[dev] Resend — open this link if inbox is empty:\n" + verificationUrl + "\n");
+  }
+
   return res
     .status(200)
     .json(new ApiResponse(200, {}, "Mail has been sent to your mail ID"));
+});
+
+/**
+ * Public resend flow for users who cannot login yet because email is unverified.
+ * Returns a generic success response to avoid exposing account existence.
+ */
+const resendVerificationEmailPublic = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email?.trim()) {
+    throw new ApiError(400, "Email is required");
+  }
+
+  const user = await User.findOne({ email: email.toLowerCase().trim() });
+
+  if (user && !user.isEmailVerified) {
+    const { unHashedToken, hashedToken, tokenExpiry } = user.generateTemporaryToken();
+    user.emailVerificationToken = hashedToken;
+    user.emailVerificationExpiry = tokenExpiry;
+    await user.save({ validateBeforeSave: false });
+
+    const verificationUrl = buildEmailVerificationUrl(req, unHashedToken);
+    await sendEmail({
+      email: user.email,
+      subject: "Please verify your email",
+      content: emailVerificationContent(user.username, verificationUrl),
+    });
+
+    if (process.env.NODE_ENV !== "production") {
+      console.info("\n[dev] Public resend — open this link if inbox is empty:\n" + verificationUrl + "\n");
+    }
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        {},
+        "If that email exists and is not verified, a verification link has been sent.",
+      ),
+    );
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
@@ -276,10 +331,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       // If token is valid but is used already
       throw new ApiError(401, "Refresh token is expired or used");
     }
-    const options = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-    };
+    const cookieOpts = getAuthCookieOptions();
 
     const { accessToken, refreshToken: newRefreshToken } =
       await generateAccessAndRefreshTokens(user._id);
@@ -290,8 +342,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", newRefreshToken, options)
+      .cookie("accessToken", accessToken, cookieOpts)
+      .cookie("refreshToken", newRefreshToken, cookieOpts)
       .json(
         new ApiResponse(
           200,
@@ -328,7 +380,7 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
   await sendEmail({
     email: user?.email,
     subject: "Password reset request",
-    mailgenContent: forgotPasswordMailgenContent(
+    content: forgotPasswordContent(
       user.username,
       `${process.env.FORGOT_PASSWORD_REDIRECT_URL}/${unHashedToken}`,
     ),
@@ -365,7 +417,7 @@ const resetForgottenPassword = asyncHandler(async (req, res) => {
 
   // If either of the one is false that means the token is invalid or expired
   if (!user) {
-    throw new ApiError(489, "Token is invalid or expired");
+    throw new ApiError(410, "Token is invalid or expired");
   }
 
   // if everything is ok and token id valid
@@ -418,6 +470,7 @@ export {
   refreshAccessToken,
   registerUser,
   resendEmailVerification,
+  resendVerificationEmailPublic,
   resetForgottenPassword,
   verifyEmail,
   resendEmailVerification as resendVerificationEmail,

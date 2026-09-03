@@ -1,17 +1,17 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { fetchCompanies } from "../api/companies.js";
-import { fetchCurrentUser } from "../api/auth.js";
-import { fetchHealthcheck } from "../api/health.js";
-import { fetchJobs } from "../api/jobs.js";
-import { fetchApplications } from "../api/applications.js";
-import { fetchSavedJobs } from "../api/savedJobs.js";
+import { fetchCompanies } from "../features/company/api/companies.js";
+import { fetchCurrentUser } from "../features/auth/api/auth.js";
+import { fetchHealthcheck } from "../features/app/api/health.js";
+import { fetchJobs } from "../features/jobs/api/jobs.js";
+import { fetchApplications } from "../features/applications/api/applications.js";
+import { fetchSavedJobs } from "../features/jobs/api/savedJobs.js";
 import {
   extractApplications,
   extractCompanies,
   extractJobs,
   extractSavedJobs,
   extractUser,
-} from "../utils/normalizers.js";
+} from "../shared/utils/normalizers.js";
 
 const AppContext = createContext(null);
 

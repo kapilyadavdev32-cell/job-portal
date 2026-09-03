@@ -1,0 +1,300 @@
+{
+  "info": {
+    "name": "JOBPORTAL Report APIs",
+    "_postman_id": "d0f5f2c1-8db4-4aef-9f66-3bc3f0f6f4b1",
+    "description": "Collection for project report screenshots: healthcheck, auth, jobs with filters, applications, and admin verify company.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1) Healthcheck API Response",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/healthcheck",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "healthcheck"
+          ]
+        },
+        "description": "Use this response screenshot for: Healthcheck API Response"
+      },
+      "response": []
+    },
+    {
+      "name": "2A) Auth Register API",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"report_user\",\n  \"email\": \"report_user@example.com\",\n  \"password\": \"Password@123\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "register"
+          ]
+        },
+        "description": "Optional helper for report. You can screenshot register or login API."
+      },
+      "response": []
+    },
+    {
+      "name": "2B) Auth Login API (Use for Screenshot)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "try {",
+              "  const json = pm.response.json();",
+              "  if (json && json.data && json.data.accessToken) {",
+              "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
+              "  }",
+              "} catch (e) {}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "login"
+          ]
+        },
+        "description": "Use this response screenshot for: Auth Login/Register API in Postman"
+      },
+      "response": []
+    },
+    {
+      "name": "3) Jobs API (GET with filters)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/jobs?keyword={{keyword}}&location={{location}}&jobType={{jobType}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "jobs"
+          ],
+          "query": [
+            {
+              "key": "keyword",
+              "value": "{{keyword}}"
+            },
+            {
+              "key": "location",
+              "value": "{{location}}"
+            },
+            {
+              "key": "jobType",
+              "value": "{{jobType}}"
+            }
+          ]
+        },
+        "description": "Use this response screenshot for: Jobs API (GET with filters)"
+      },
+      "response": []
+    },
+    {
+      "name": "4A) Applications API - Apply",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "try {",
+              "  const json = pm.response.json();",
+              "  const id = json?.data?._id || json?.data?.id || json?._id || json?.id;",
+              "  if (id) pm.collectionVariables.set('applicationId', id);",
+              "} catch (e) {}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"job\": \"{{jobId}}\",\n  \"coverLetter\": \"I am interested in this role and have relevant skills.\",\n  \"resume\": {\n    \"url\": \"https://example.com/resume.pdf\",\n    \"localPath\": \"resume.pdf\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/applications",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "applications"
+          ]
+        },
+        "description": "Step 1 for Applications screenshot."
+      },
+      "response": []
+    },
+    {
+      "name": "4B) Applications API - Status Update",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"Shortlisted\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/applications/{{applicationId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "applications",
+            "{{applicationId}}"
+          ]
+        },
+        "description": "Use this response screenshot for: Applications API (Apply + Status Update)"
+      },
+      "response": []
+    },
+    {
+      "name": "5) Admin Verify Company API",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"isVerified\": true\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admin/companies/{{companyId}}/verify",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "admin",
+            "companies",
+            "{{companyId}}",
+            "verify"
+          ]
+        },
+        "description": "Use this response screenshot for: Admin Verify Company API"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "userEmail",
+      "value": "report_user@example.com"
+    },
+    {
+      "key": "userPassword",
+      "value": "Password@123"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "jobId",
+      "value": ""
+    },
+    {
+      "key": "applicationId",
+      "value": ""
+    },
+    {
+      "key": "companyId",
+      "value": ""
+    },
+    {
+      "key": "keyword",
+      "value": "developer"
+    },
+    {
+      "key": "location",
+      "value": "remote"
+    },
+    {
+      "key": "jobType",
+      "value": "Full-Time"
+    }
+  ]
+}

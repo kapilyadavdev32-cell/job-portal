@@ -1,14 +1,16 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { MainLayout } from "../layouts/MainLayout.jsx";
-import { NotFoundPage } from "../pages/NotFoundPage.jsx";
-import { HomePage } from "../pages/HomePage.jsx";
-import { JobsPage } from "../pages/JobsPage.jsx";
-import { JobDetailPage } from "../pages/JobDetailPage.jsx";
-import { CompaniesPage } from "../pages/CompaniesPage.jsx";
-import { CompanyDetailPage } from "../pages/CompanyDetailPage.jsx";
-import { AuthPage } from "../pages/AuthPage.jsx";
-import { DashboardPage } from "../pages/DashboardPage.jsx";
-import { ProtectedRoute } from "../components/ProtectedRoute.jsx";
+import { NotFoundPage } from "../features/app/pages/NotFoundPage.jsx";
+import { HomePage } from "../features/app/pages/HomePage.jsx";
+import { JobsPage } from "../features/jobs/pages/JobsPage.jsx";
+import { JobDetailPage } from "../features/jobs/pages/JobDetailPage.jsx";
+import { JobEditorPage } from "../features/jobs/pages/JobEditorPage.jsx";
+import { CompaniesPage } from "../features/company/pages/CompaniesPage.jsx";
+import { CompanyDetailPage } from "../features/company/pages/CompanyDetailPage.jsx";
+import { CompanyEditorPage } from "../features/company/pages/CompanyEditorPage.jsx";
+import { AuthPage } from "../features/auth/pages/AuthPage.jsx";
+import { DashboardPage } from "../features/applications/pages/DashboardPage.jsx";
+import { ProtectedRoute } from "../shared/components/ProtectedRoute.jsx";
 
 function AppRouter() {
   return (
@@ -17,8 +19,40 @@ function AppRouter() {
         <Route path="/" element={<HomePage />} />
         <Route path="/jobs" element={<JobsPage />} />
         <Route path="/jobs/:jobId" element={<JobDetailPage />} />
+        <Route
+          path="/jobs/new"
+          element={
+            <ProtectedRoute>
+              <JobEditorPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/jobs/:jobId/edit"
+          element={
+            <ProtectedRoute>
+              <JobEditorPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/companies" element={<CompaniesPage />} />
         <Route path="/companies/:companyId" element={<CompanyDetailPage />} />
+        <Route
+          path="/companies/new"
+          element={
+            <ProtectedRoute>
+              <CompanyEditorPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/companies/:companyId/edit"
+          element={
+            <ProtectedRoute>
+              <CompanyEditorPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/auth" element={<AuthPage />} />
         <Route
           path="/dashboard"

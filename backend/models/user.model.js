@@ -15,6 +15,11 @@ const userSchema = new Schema(
         localPath: "",
       },
     },
+    resume: {
+      url: String,
+      localPath: String,
+      originalName: String,
+    },
     username: {
       type: String,
       required: true,
@@ -68,12 +73,12 @@ const userSchema = new Schema(
 );
 
 
-userSchema.pre("save", async function (next) {
+// Async hooks: do not use `next`; Mongoose does not pass it (calling next() caused "next is not a function").
+userSchema.pre("save", async function () {
   if (!this.isModified("password")) {
-    return next();
+    return;
   }
   this.password = await bcrypt.hash(this.password, 10);
-  next();
 });
 
 

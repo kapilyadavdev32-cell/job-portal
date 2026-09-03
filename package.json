@@ -6,5 +6,8 @@
     "backend:start": "npm --prefix backend run start",
     "frontend": "npm --prefix frontend run dev",
     "frontend:build": "npm --prefix frontend run build"
+  },
+  "devDependencies": {
+    "md-to-pdf": "^5.2.5"
   }
 }
