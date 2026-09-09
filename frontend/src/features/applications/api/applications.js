@@ -47,3 +47,16 @@ export async function createApplication(payload) {
 export function fetchApplications() {
   return apiRequest("/applications");
 }
+
+export function updateApplicationStatus(applicationId, status) {
+  return apiRequest(`/applications/${encodeURIComponent(applicationId)}`, {
+    method: "PUT",
+    body: JSON.stringify({ status }),
+  });
+}
+
+export function withdrawApplication(applicationId) {
+  return apiRequest(`/applications/${encodeURIComponent(applicationId)}`, {
+    method: "DELETE",
+  });
+}
