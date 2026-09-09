@@ -9,6 +9,7 @@ import { CompaniesPage } from "../features/company/pages/CompaniesPage.jsx";
 import { CompanyDetailPage } from "../features/company/pages/CompanyDetailPage.jsx";
 import { CompanyEditorPage } from "../features/company/pages/CompanyEditorPage.jsx";
 import { AuthPage } from "../features/auth/pages/AuthPage.jsx";
+import { VerifyEmailPage } from "../features/auth/pages/VerifyEmailPage.jsx";
 import { DashboardPage } from "../features/applications/pages/DashboardPage.jsx";
 import { ProtectedRoute } from "../shared/components/ProtectedRoute.jsx";
 
@@ -54,6 +55,7 @@ function AppRouter() {
           }
         />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
         <Route
           path="/dashboard"
           element={

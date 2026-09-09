@@ -11,15 +11,14 @@ import { ApiResponse } from "../utils/api-response.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import { getAuthCookieOptions } from "../utils/cookies.js";
 
-/** Public URL for the verify-email link (email + dev fallback). Prefer VERIFY_EMAIL_BASE_URL so links work behind Vite proxy. */
+/** Public URL for the verify-email link. Points to frontend UI verify-email route. */
 function buildEmailVerificationUrl(req, unHashedToken) {
   const base =
     process.env.VERIFY_EMAIL_BASE_URL?.replace(/\/+$/, "") ||
-    process.env.API_PUBLIC_URL?.replace(/\/+$/, "");
-  if (base) {
-    return `${base}/api/v1/auth/verify-email/${unHashedToken}`;
-  }
-  return `${req.protocol}://${req.get("host")}/api/v1/auth/verify-email/${unHashedToken}`;
+    process.env.CORS_ORIGIN?.split(",")[0]?.replace(/\/+$/, "") ||
+    "https://job-portal-web-gmat.onrender.com";
+  
+  return `${base}/verify-email/${unHashedToken}`;
 }
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -29,7 +28,6 @@ const generateAccessAndRefreshTokens = async (userId) => {
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
-    // attach refresh token to the user document to avoid refreshing the access token with multiple refresh tokens
     user.refreshToken = refreshToken;
 
     await user.save({ validateBeforeSave: false });
@@ -63,18 +61,9 @@ const registerUser = asyncHandler(async (req, res) => {
     isEmailVerified: false,
   });
 
-  /**
-   * unHashedToken: unHashed token is something we will send to the user's mail
-   * hashedToken: we will keep record of hashedToken to validate the unHashedToken in verify email controller
-   * tokenExpiry: Expiry to be checked before validating the incoming token
-   */
   const { unHashedToken, hashedToken, tokenExpiry } =
     user.generateTemporaryToken();
 
-  /**
-   * assign hashedToken and tokenExpiry in DB till user clicks on email verification link
-   * The email verification is handled by {@link verifyEmail}
-   */
   user.emailVerificationToken = hashedToken;
   user.emailVerificationExpiry = tokenExpiry;
   await user.save({ validateBeforeSave: false });
@@ -133,7 +122,6 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Please verify your email first");
   }
 
-  // Compare the incoming password with hashed password
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
@@ -144,7 +132,6 @@ const loginUser = asyncHandler(async (req, res) => {
     user._id,
   );
 
-  // get the user document ignoring the password and refreshToken field
   const loggedInUser = await User.findById(user._id).select(
     "-password -refreshToken -emailVerificationToken -emailVerificationExpiry",
   );
@@ -153,12 +140,12 @@ const loginUser = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .cookie("accessToken", accessToken, cookieOpts) // set the access token in the cookie
-    .cookie("refreshToken", refreshToken, cookieOpts) // set the refresh token in the cookie
+    .cookie("accessToken", accessToken, cookieOpts)
+    .cookie("refreshToken", refreshToken, cookieOpts)
     .json(
       new ApiResponse(
         200,
-        { user: loggedInUser, accessToken, refreshToken }, // send access and refresh token in response if client decides to save them by themselves
+        { user: loggedInUser, accessToken, refreshToken },
         "User logged in successfully",
       ),
     );
@@ -224,9 +211,8 @@ const verifyEmail = asyncHandler(async (req, res) => {
   user.isEmailVerified = true;
   await user.save({ validateBeforeSave: false });
 
-  // If user clicked link in browser directly, show friendly HTML page with button to Sign In
   if (req.accepts("html") || req.headers["user-agent"]?.includes("Mozilla")) {
-    const frontendUrl = process.env.CORS_ORIGIN?.split(",")[0] || "https://job-portal-dzq8.onrender.com";
+    const frontendUrl = process.env.CORS_ORIGIN?.split(",")[0] || "https://job-portal-web-gmat.onrender.com";
     return res.status(200).send(`
       <!DOCTYPE html>
       <html>
