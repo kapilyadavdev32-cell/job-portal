@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import dns from "dns/promises";
 
 function escapeHtml(value = "") {
   return String(value)
@@ -9,7 +10,7 @@ function escapeHtml(value = "") {
     .replaceAll("'", "&#39;");
 }
 
-function buildTransporter() {
+async function buildTransporter() {
   // Optional custom SMTP transport (kept for compatibility).
   if (process.env.SMTP_HOST?.trim() && process.env.SMTP_USER?.trim()) {
     const port = Number.parseInt(String(process.env.SMTP_PORT || "587"), 10);
@@ -32,10 +33,17 @@ function buildTransporter() {
     throw new Error("Missing GMAIL_USER or GMAIL_APP_PASSWORD in backend/.env");
   }
 
+  // FORCE IPv4 by manually looking up the IP address.
+  // This bypasses Node.js connecting to IPv6 on Render (ENETUNREACH bug).
+  const lookup = await dns.lookup("smtp.gmail.com", { family: 4 });
+
   return nodemailer.createTransport({
-    host: "smtp.gmail.com",
+    host: lookup.address, // Explicit IPv4 address 
     port: 587,
     secure: false, // STARTTLS
+    tls: {
+      servername: "smtp.gmail.com", // Ensure TLS verifies the correct hostname
+    },
     auth: {
       user: process.env.GMAIL_USER.trim(),
       pass: process.env.GMAIL_APP_PASSWORD.trim(),
@@ -43,8 +51,6 @@ function buildTransporter() {
     connectionTimeout: 5000,
     greetingTimeout: 5000,
     socketTimeout: 10000,
-    // Fix: Force IPv4, as Render/Node.js often fails to route outgoing IPv6 to Google
-    family: 4,
   });
 }
 
@@ -60,7 +66,7 @@ function getMailerProviderName() {
  */
 const sendEmail = async (options) => {
   try {
-    const transporter = buildTransporter();
+    const transporter = await buildTransporter(); // awaits the async dns lookup
     const from =
       process.env.MAIL_FROM?.trim() ||
       `Job Portal <${(process.env.GMAIL_USER || "noreply@example.com").trim()}>`;
