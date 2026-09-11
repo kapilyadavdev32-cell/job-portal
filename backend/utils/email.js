@@ -43,6 +43,8 @@ function buildTransporter() {
     connectionTimeout: 5000,
     greetingTimeout: 5000,
     socketTimeout: 10000,
+    // Fix: Force IPv4, as Render/Node.js often fails to route outgoing IPv6 to Google
+    family: 4,
   });
 }
 
