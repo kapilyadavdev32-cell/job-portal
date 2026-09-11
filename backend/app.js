@@ -18,9 +18,8 @@ import {
 const app = express();
 const isProd = process.env.NODE_ENV === "production";
 
-if (process.env.TRUST_PROXY === "true" || process.env.TRUST_PROXY === "1") {
-  app.set("trust proxy", 1);
-}
+// Always trust Render's reverse proxy for correct IP identification
+app.set("trust proxy", 1);
 
 // Security headers (JSON API — CSP disabled; enable if you serve HTML from this server)
 app.use(
