@@ -1,11 +1,7 @@
 import app from "./app.js";
 import dotenv from "dotenv";
-import dns from "dns";
 import connectDB from "./db/index.js";
 import { validateEnv } from "./config/validateEnv.js";
-
-// Make Node.js resolve IPv4 first (fixes Render ENETUNREACH for SMTP over IPv6)
-dns.setDefaultResultOrder("ipv4first");
 
 dotenv.config();
 validateEnv();
