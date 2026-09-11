@@ -166,7 +166,7 @@ function JobDetailPage() {
         />
         <div>
           <Link
-            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700 active:scale-95"
             to="/jobs"
           >
             <ArrowLeft className="h-4 w-4" /> Back to Jobs
@@ -224,7 +224,7 @@ function JobDetailPage() {
               <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-blue-600">
                 {job.jobType || "Full-Time"} Position
               </span>
-              <h1 className="text-2xl font-extrabold text-slate-900 md:text-4xl">{job.title}</h1>
+              <h1 className="text-2xl font-extrabold text-slate-800 md:text-4xl">{job.title}</h1>
               <p className="flex items-center gap-2 text-base font-semibold text-slate-600">
                 <Building2 className="h-4 w-4 text-slate-400" />
                 {companyId ? (
@@ -344,10 +344,10 @@ function JobDetailPage() {
         <main className="space-y-8">
           {/* JOB DESCRIPTION */}
           <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8 space-y-4">
-            <h2 className="text-xl font-bold text-slate-900 border-b border-slate-100 pb-3">
+            <h2 className="text-xl font-bold text-slate-800 border-b border-slate-100 pb-3">
               Job Description
             </h2>
-            <p className="whitespace-pre-wrap text-base leading-8 text-slate-700 font-normal">
+            <p className="whitespace-pre-wrap text-base leading-8 text-slate-600 font-normal">
               {job.description}
             </p>
           </article>
@@ -355,7 +355,7 @@ function JobDetailPage() {
           {/* REQUIRED SKILLS */}
           {job.skillsRequired?.length > 0 && (
             <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8 space-y-4">
-              <h2 className="text-xl font-bold text-slate-900 border-b border-slate-100 pb-3">
+              <h2 className="text-xl font-bold text-slate-800 border-b border-slate-100 pb-3">
                 Required Skills & Tech Stack
               </h2>
               <div className="flex flex-wrap gap-2 pt-2">
@@ -375,7 +375,7 @@ function JobDetailPage() {
         {/* SIDEBAR COMPANY CARD */}
         <aside className="space-y-6">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-            <h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3">
+            <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3">
               About the Company
             </h3>
 
@@ -392,7 +392,7 @@ function JobDetailPage() {
                 </div>
               )}
               <div>
-                <h4 className="font-bold text-slate-900">{company?.name || "Employer"}</h4>
+                <h4 className="font-bold text-slate-800">{company?.name || "Employer"}</h4>
                 <p className="text-xs text-slate-500">{company?.location || "Global"}</p>
               </div>
             </div>
