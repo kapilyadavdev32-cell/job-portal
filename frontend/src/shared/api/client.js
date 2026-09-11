@@ -27,6 +27,10 @@ export async function apiRequest(path, options = {}) {
     headers["Content-Type"] = "application/json";
   }
 
+  if (!headers["Accept"]) {
+    headers["Accept"] = "application/json";
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     credentials: "include",
     ...options,

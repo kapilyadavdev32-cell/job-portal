@@ -17,7 +17,7 @@ function buildEmailVerificationUrl(req, unHashedToken) {
     process.env.VERIFY_EMAIL_BASE_URL?.replace(/\/+$/, "") ||
     process.env.CORS_ORIGIN?.split(",")[0]?.replace(/\/+$/, "") ||
     "https://job-portal-web-gmat.onrender.com";
-  
+
   return `${base}/verify-email/${unHashedToken}`;
 }
 
@@ -79,8 +79,8 @@ const registerUser = asyncHandler(async (req, res) => {
   if (process.env.NODE_ENV !== "production") {
     console.info(
       "\n[dev] If no verification email arrived, open this link once in your browser:\n" +
-        verificationUrl +
-        "\n",
+      verificationUrl +
+      "\n",
     );
   }
 
@@ -188,8 +188,10 @@ const verifyEmail = asyncHandler(async (req, res) => {
     emailVerificationExpiry: { $gt: Date.now() },
   });
 
+  const wantsHtml = req.accepts('html') && !req.headers['accept']?.includes('application/json');
+
   if (!user) {
-    if (req.accepts("html") || req.headers["user-agent"]?.includes("Mozilla")) {
+    if (wantsHtml) {
       return res.status(410).send(`
         <!DOCTYPE html>
         <html>
@@ -211,7 +213,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
   user.isEmailVerified = true;
   await user.save({ validateBeforeSave: false });
 
-  if (req.accepts("html") || req.headers["user-agent"]?.includes("Mozilla")) {
+  if (wantsHtml) {
     const frontendUrl = process.env.CORS_ORIGIN?.split(",")[0] || "https://job-portal-web-gmat.onrender.com";
     return res.status(200).send(`
       <!DOCTYPE html>

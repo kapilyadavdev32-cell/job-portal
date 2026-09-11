@@ -21,6 +21,9 @@ function buildTransporter() {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS || "",
       },
+      connectionTimeout: 5000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
     });
   }
 
@@ -31,12 +34,15 @@ function buildTransporter() {
 
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false, // STARTTLS
     auth: {
       user: process.env.GMAIL_USER.trim(),
       pass: process.env.GMAIL_APP_PASSWORD.trim(),
     },
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 10000,
   });
 }
 
