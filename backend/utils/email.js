@@ -1,5 +1,4 @@
-import nodemailer from "nodemailer";
-import dns from "dns/promises";
+import { Resend } from "resend";
 
 function escapeHtml(value = "") {
   return String(value)
@@ -10,55 +9,14 @@ function escapeHtml(value = "") {
     .replaceAll("'", "&#39;");
 }
 
-async function buildTransporter() {
-  // Optional custom SMTP transport (kept for compatibility).
-  if (process.env.SMTP_HOST?.trim() && process.env.SMTP_USER?.trim()) {
-    const port = Number.parseInt(String(process.env.SMTP_PORT || "587"), 10);
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST.trim(),
-      port: Number.isFinite(port) ? port : 587,
-      secure: process.env.SMTP_SECURE === "true",
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS || "",
-      },
-      connectionTimeout: 5000,
-      greetingTimeout: 5000,
-      socketTimeout: 10000,
-    });
-  }
+let resendClient = null;
 
-  // Default transport: Gmail with App Password.
-  if (!process.env.GMAIL_USER?.trim() || !process.env.GMAIL_APP_PASSWORD?.trim()) {
-    throw new Error("Missing GMAIL_USER or GMAIL_APP_PASSWORD in backend/.env");
-  }
-
-  // FORCE IPv4 by manually looking up the IP address.
-  // This bypasses Node.js connecting to IPv6 on Render (ENETUNREACH bug).
-  const lookup = await dns.lookup("smtp.gmail.com", { family: 4 });
-
-  return nodemailer.createTransport({
-    host: lookup.address, // Explicit IPv4 address 
-    port: 587,
-    secure: false, // STARTTLS
-    tls: {
-      servername: "smtp.gmail.com", // Ensure TLS verifies the correct hostname
-    },
-    auth: {
-      user: process.env.GMAIL_USER.trim(),
-      pass: process.env.GMAIL_APP_PASSWORD.trim(),
-    },
-    connectionTimeout: 5000,
-    greetingTimeout: 5000,
-    socketTimeout: 10000,
-  });
-}
-
-function getMailerProviderName() {
-  if (process.env.SMTP_HOST?.trim() && process.env.SMTP_USER?.trim()) {
-    return "SMTP";
-  }
-  return "Gmail";
+function getResendClient() {
+  if (resendClient) return resendClient;
+  
+  const apiKey = process.env.RESEND_API_KEY;
+  resendClient = new Resend(apiKey);
+  return resendClient;
 }
 
 /**
@@ -66,29 +24,30 @@ function getMailerProviderName() {
  */
 const sendEmail = async (options) => {
   try {
-    const transporter = await buildTransporter(); // awaits the async dns lookup
-    const from =
-      process.env.MAIL_FROM?.trim() ||
-      `Job Portal <${(process.env.GMAIL_USER || "noreply@example.com").trim()}>`;
+    const resend = getResendClient();
+    
+    // Resend requires verified sending domains. They give everyone 'onboarding@resend.dev' for sandbox testing.
+    // If you add a custom domain to Resend later, you can use process.env.MAIL_FROM.
+    const from = process.env.MAIL_FROM?.trim() || "onboarding@resend.dev";
 
-    const info = await transporter.sendMail({
+    const { data, error } = await resend.emails.send({
       from,
       to: options.email,
       subject: options.subject,
-      text: options.content?.text || "",
       html: options.content?.html || "",
+      text: options.content?.text || "",
     });
 
-    if (process.env.NODE_ENV !== "production") {
-      console.info(
-        `[email] Sent via ${getMailerProviderName()} to ${options.email} | subject="${options.subject}" | messageId=${info?.messageId || "n/a"}`,
-      );
+    if (error) {
+      console.error("Resend API Error:", error);
+    } else {
+      if (process.env.NODE_ENV !== "production") {
+        console.info(`[email] Sent via Resend to ${options.email} | id=${data?.id}`);
+      }
     }
-  } catch (error) {
-    console.error(
-      "Email send failed (user flow continues). Set GMAIL_USER + GMAIL_APP_PASSWORD (or SMTP_*) and MAIL_FROM in backend/.env.",
-    );
-    console.error(error);
+  } catch (err) {
+    console.error("Email send failed (user flow continues). Error details:");
+    console.error(err);
   }
 };
 
