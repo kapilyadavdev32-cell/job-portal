@@ -149,7 +149,7 @@ function JobCard({ job }) {
         {id && (
           <Link
             to={`/jobs/${id}`}
-            className="inline-flex items-center gap-1 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-600 active:scale-95"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md active:scale-95"
           >
             View Details <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
