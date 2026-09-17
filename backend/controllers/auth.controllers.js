@@ -58,7 +58,7 @@ const registerUser = asyncHandler(async (req, res) => {
     password,
     username,
     role: userRole,
-    isEmailVerified: false,
+    isEmailVerified: true,
   });
 
   const { unHashedToken, hashedToken, tokenExpiry } =
@@ -70,15 +70,19 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const verificationUrl = buildEmailVerificationUrl(req, unHashedToken);
 
-  await sendEmail({
-    email: user?.email,
-    subject: "Please verify your email",
-    content: emailVerificationContent(user.username, verificationUrl),
-  });
+  try {
+    await sendEmail({
+      email: user?.email,
+      subject: "Please verify your email",
+      content: emailVerificationContent(user.username, verificationUrl),
+    });
+  } catch (emailErr) {
+    console.warn("Email send skipped or failed (Resend free tier limit):", emailErr?.message);
+  }
 
   if (process.env.NODE_ENV !== "production") {
     console.info(
-      "\n[dev] If no verification email arrived, open this link once in your browser:\n" +
+      "\n[dev] Verification link:\n" +
       verificationUrl +
       "\n",
     );
@@ -98,7 +102,7 @@ const registerUser = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         { user: createdUser },
-        "Users registered successfully and verification email has been sent on your email.",
+        "Account registered successfully! Email verification is automatically completed (Resend API pricing notice). You can log in directly.",
       ),
     );
 });
@@ -119,7 +123,8 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   if (!user.isEmailVerified) {
-    throw new ApiError(403, "Please verify your email first");
+    user.isEmailVerified = true;
+    await user.save({ validateBeforeSave: false });
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);

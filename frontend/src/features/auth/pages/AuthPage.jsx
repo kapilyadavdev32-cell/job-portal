@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { BriefcaseBusiness, CheckCircle2, ShieldCheck, Mail, ArrowLeft, Lock } from "lucide-react";
+import { BriefcaseBusiness, CheckCircle2, ShieldCheck, Mail, ArrowLeft, Lock, Info } from "lucide-react";
 import { loginUser, registerUser, resendVerificationEmail } from "../api/auth.js";
 import { AuthForm } from "../components/AuthForm.jsx";
 import { useAppData } from "../../../store/AppContext.jsx";
@@ -49,7 +49,7 @@ function AuthPage() {
           type: "success",
           message:
             result?.message ||
-            "Account created! Check your email to verify, then sign in.",
+            "Account created! Email verification is auto-bypassed due to Resend API pricing limits. You can sign in immediately.",
         });
         reset();
         setMode("login");
@@ -140,6 +140,17 @@ function AuthPage() {
 
         {/* RIGHT AUTH CONTAINER */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          {/* NOTICE FOR INTERVIEWERS & REVIEWERS */}
+          <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-xs text-amber-950 shadow-sm flex items-start gap-3">
+            <Info className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
+            <div className="space-y-1">
+              <span className="font-extrabold text-amber-950 text-sm block">Notice for Interviewers & Reviewers:</span>
+              <p className="leading-relaxed font-medium text-amber-900">
+                Due to Resend Email API free-tier & pricing limits, email verification is automatically bypassed. You can register any new account or log in immediately without needing to verify via email!
+              </p>
+            </div>
+          </div>
+
           {/* TAB SWITCHER */}
           <div className="flex rounded-2xl bg-slate-100 p-1">
             <button
