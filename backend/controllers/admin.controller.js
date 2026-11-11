@@ -12,7 +12,7 @@ const getAllUsers = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only admins can access this resource");
   }
   const users = await User.find().select("-password -refreshToken");
-  return res
+  return res 
     .status(200)
     .json(new ApiResponse(200, { users }, "All users fetched"));
 });

@@ -125,6 +125,9 @@ function JobDetailPage() {
         coverLetter: applyForm.coverLetter.trim() || undefined,
         resumeFile: applyForm.resumeFile || undefined,
         resumeDriveUrl: applyForm.resumeDriveUrl.trim() || undefined,
+        // When no new file or Drive URL is supplied, attach the profile resume
+        // that satisfied the validation above.
+        resume: auth.user?.resume,
       });
       pushToast("Application submitted successfully!", "success");
       setApplyModalOpen(false);
