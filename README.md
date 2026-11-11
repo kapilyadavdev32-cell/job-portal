@@ -40,7 +40,8 @@ This repo includes a root-level `render.yaml` for a two-service deployment:
 3. Fill the prompted variables:
    - `MONGO_URI`: your MongoDB Atlas URI
    - `CORS_ORIGIN`: your frontend URL, for example `https://jobportal-web.onrender.com`
-   - `VERIFY_EMAIL_BASE_URL`: your backend URL, for example `https://jobportal-api.onrender.com`
+   - `VERIFY_EMAIL_BASE_URL`: your frontend URL, for example `https://jobportal-web.onrender.com`
+   - `API_PUBLIC_URL` (optional): override the backend origin used for uploaded file URLs, without `/api/v1`
    - `FORGOT_PASSWORD_REDIRECT_URL`: your frontend URL for reset flow
    - `VITE_API_BASE_URL`: your backend API URL, for example `https://jobportal-api.onrender.com/api/v1`
    - `GMAIL_USER` and `GMAIL_APP_PASSWORD`: optional, but needed for verification and reset emails

@@ -33,6 +33,7 @@ import { StatusBadge } from "../../../shared/components/StatusBadge.jsx";
 import { useAppData } from "../../../store/AppContext.jsx";
 import { useToast } from "../../../store/ToastContext.jsx";
 import { formatDate } from "../../../shared/utils/formatters.js";
+import { resolveResumeUrl } from "../../../shared/api/client.js";
 
 const RECRUITER_STATUS_OPTIONS = ["Applied", "Shortlisted", "Rejected", "Hired"];
 
@@ -399,7 +400,7 @@ function DashboardPage() {
                           <td className="px-4 py-4">
                             {app.resume?.url ? (
                               <a
-                                href={app.resume.url}
+                                href={resolveResumeUrl(app.resume.url)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
@@ -531,7 +532,7 @@ function DashboardPage() {
                   <div>
                     <p className="text-xs font-bold uppercase text-blue-800">Current Saved Resume</p>
                     <a
-                      href={user.resume.url}
+                      href={resolveResumeUrl(user.resume.url)}
                       target="_blank"
                       rel="noreferrer"
                       className="text-sm font-bold text-blue-700 hover:underline"

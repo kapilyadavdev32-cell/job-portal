@@ -5,6 +5,24 @@ const API_BASE_URL =
   (import.meta.env.DEV ? "/api/v1" : "http://localhost:8000/api/v1");
 const ACCESS_TOKEN_KEY = "accessToken";
 
+export function resolveResumeUrl(value) {
+  if (!value || typeof window === "undefined") {
+    return value || "";
+  }
+
+  const apiOrigin = new URL(API_BASE_URL, window.location.origin).origin;
+  const resumeUrl = new URL(value, apiOrigin);
+
+  if (resumeUrl.pathname.startsWith("/uploads/resumes/")) {
+    return new URL(
+      `${resumeUrl.pathname}${resumeUrl.search}${resumeUrl.hash}`,
+      apiOrigin,
+    ).toString();
+  }
+
+  return resumeUrl.toString();
+}
+
 export function setAccessToken(token) {
   if (typeof window !== "undefined") {
     window.sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
