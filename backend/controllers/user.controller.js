@@ -1,11 +1,17 @@
 import { User } from "../models/user.model.js";
+import { buildPublicFileUrl } from "../utils/publicUrl.js";
+import { importResumeFromGoogleDrive } from "../utils/googleDriveResume.js";
 import { ApiError } from "../utils/api-error.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { asyncHandler } from "../utils/async-handler.js";
 
-function buildPublicFileUrl(req, relativePath) {
-  const cleanPath = relativePath.replace(/\\/g, "/").replace(/^\/+/, "");
-  return `${req.protocol}://${req.get("host")}/${cleanPath}`;
+const USER_PUBLIC_FIELDS =
+  "-password -refreshToken -emailVerificationToken -emailVerificationExpiry";
+
+function assertCanManageResume(user) {
+  if (user.role !== "jobseeker") {
+    throw new ApiError(403, "Only job seekers can save a resume");
+  }
 }
 
 const getAllUsers = asyncHandler(async (req, res) => {
@@ -63,6 +69,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 });
 
 const uploadMyResume = asyncHandler(async (req, res) => {
+  assertCanManageResume(req.user);
   if (!req.file) {
     throw new ApiError(400, "Resume file is required");
   }
@@ -78,7 +85,7 @@ const uploadMyResume = asyncHandler(async (req, res) => {
     req.user._id,
     { $set: { resume } },
     { new: true, runValidators: true },
-  ).select("-password -refreshToken -emailVerificationToken -emailVerificationExpiry");
+  ).select(USER_PUBLIC_FIELDS);
 
   return res
     .status(200)
@@ -86,42 +93,23 @@ const uploadMyResume = asyncHandler(async (req, res) => {
 });
 
 const importMyResume = asyncHandler(async (req, res) => {
-  const { resumeUrl, originalName } = req.body;
-
-  if (!resumeUrl?.trim()) {
-    throw new ApiError(400, "Resume URL is required");
+  assertCanManageResume(req.user);
+  const resumeUrl = typeof req.body?.resumeUrl === "string" ? req.body.resumeUrl.trim() : "";
+  if (!resumeUrl) {
+    throw new ApiError(400, "A Google Drive or Google Docs link is required");
   }
 
-  let parsedUrl;
-  try {
-    parsedUrl = new URL(resumeUrl);
-  } catch {
-    throw new ApiError(400, "Resume URL must be a valid absolute URL");
-  }
-
-  if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-    throw new ApiError(400, "Resume URL must use http or https");
-  }
-
-  const inferredName =
-    originalName?.trim() ||
-    decodeURIComponent(parsedUrl.pathname.split("/").filter(Boolean).pop() || "resume-link");
-
-  const resume = {
-    url: parsedUrl.toString(),
-    localPath: "",
-    originalName: inferredName,
-  };
+  const resume = await importResumeFromGoogleDrive(req, resumeUrl);
 
   const user = await User.findByIdAndUpdate(
     req.user._id,
     { $set: { resume } },
     { new: true, runValidators: true },
-  ).select("-password -refreshToken -emailVerificationToken -emailVerificationExpiry");
+  ).select(USER_PUBLIC_FIELDS);
 
   return res
     .status(200)
-    .json(new ApiResponse(200, { user, resume }, "Resume saved"));
+    .json(new ApiResponse(200, { user, resume }, "Resume imported from Google Drive"));
 });
 
 export { getAllUsers, getUserById, updateUser, deleteUser, uploadMyResume, importMyResume };

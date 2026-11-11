@@ -19,6 +19,7 @@ const applicationSchema = new Schema(
     resume: {
       url: String,
       localPath: String,
+      originalName: String,
     },
 
     status: {

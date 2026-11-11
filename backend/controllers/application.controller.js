@@ -1,18 +1,63 @@
 import { Application } from "../models/application.model.js";
 import { Job } from "../models/job.model.js";
 import { Company } from "../models/company.model.js";
+import { User } from "../models/user.model.js";
+import { importResumeFromGoogleDrive, isGoogleDriveLink } from "../utils/googleDriveResume.js";
 import { ApiError } from "../utils/api-error.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { asyncHandler } from "../utils/async-handler.js";
 
+async function resolveApplicationResume(req, incoming) {
+  if (isGoogleDriveLink(incoming?.url)) {
+    const resume = await importResumeFromGoogleDrive(req, incoming.url);
+    await User.findByIdAndUpdate(req.user._id, { $set: { resume } });
+    return resume;
+  }
+
+  if (incoming?.url) {
+    return {
+      url: incoming.url,
+      localPath: incoming.localPath || "",
+      originalName: incoming.originalName || "",
+    };
+  }
+
+  if (req.user.resume?.url) {
+    if (isGoogleDriveLink(req.user.resume.url)) {
+      const resume = await importResumeFromGoogleDrive(req, req.user.resume.url);
+      await User.findByIdAndUpdate(req.user._id, { $set: { resume } });
+      return resume;
+    }
+    return {
+      url: req.user.resume.url,
+      localPath: req.user.resume.localPath || "",
+      originalName: req.user.resume.originalName || "",
+    };
+  }
+
+  return null;
+}
+
 // jobseeker submits application
 const applyToJob = asyncHandler(async (req, res) => {
-  const { job: jobId, resume, coverLetter } = req.body;
+  if (req.user.role !== "jobseeker") {
+    throw new ApiError(403, "Only job seekers can apply to jobs");
+  }
+
+  const { job: jobId, resume: incomingResume, coverLetter } = req.body;
   const job = await Job.findById(jobId);
   if (!job) throw new ApiError(404, "Job not found");
 
   const already = await Application.findOne({ job: jobId, applicant: req.user._id });
   if (already) throw new ApiError(409, "Already applied to this job");
+
+  const resume = await resolveApplicationResume(req, incomingResume);
+  if (!resume?.url) {
+    throw new ApiError(
+      400,
+      "Upload a resume file or import a Google Drive link before applying.",
+    );
+  }
 
   const application = await Application.create({
     job: jobId,
