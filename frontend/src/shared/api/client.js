@@ -3,6 +3,19 @@
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ??
   (import.meta.env.DEV ? "/api/v1" : "http://localhost:8000/api/v1");
+const ACCESS_TOKEN_KEY = "accessToken";
+
+export function setAccessToken(token) {
+  if (typeof window !== "undefined") {
+    window.sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
+  }
+}
+
+export function clearAccessToken() {
+  if (typeof window !== "undefined") {
+    window.sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+  }
+}
 
 async function parseResponse(response) {
   const contentType = response.headers.get("content-type") || "";
@@ -20,15 +33,22 @@ async function parseResponse(response) {
 }
 
 export async function apiRequest(path, options = {}) {
-  const headers = { ...(options.headers || {}) };
+  const headers = new Headers(options.headers || {});
   const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
 
-  if (!isFormData && !headers["Content-Type"]) {
-    headers["Content-Type"] = "application/json";
+  if (!isFormData && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
   }
 
-  if (!headers["Accept"]) {
-    headers["Accept"] = "application/json";
+  if (!headers.has("Accept")) {
+    headers.set("Accept", "application/json");
+  }
+
+  if (typeof window !== "undefined" && !headers.has("Authorization")) {
+    const accessToken = window.sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    if (accessToken) {
+      headers.set("Authorization", `Bearer ${accessToken}`);
+    }
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {

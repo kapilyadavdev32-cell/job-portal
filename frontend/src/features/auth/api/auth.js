@@ -1,10 +1,20 @@
-import { apiRequest } from "../../../shared/api/client.js";
+import {
+  apiRequest,
+  clearAccessToken,
+  setAccessToken,
+} from "../../../shared/api/client.js";
 
-export function loginUser(payload) {
-  return apiRequest("/auth/login", {
+export async function loginUser(payload) {
+  const result = await apiRequest("/auth/login", {
     method: "POST",
     body: JSON.stringify(payload),
   });
+
+  if (result?.data?.accessToken) {
+    setAccessToken(result.data.accessToken);
+  }
+
+  return result;
 }
 
 export function registerUser(payload) {
@@ -18,8 +28,12 @@ export function fetchCurrentUser() {
   return apiRequest("/auth/current-user");
 }
 
-export function logoutUser() {
-  return apiRequest("/auth/logout", { method: "POST" });
+export async function logoutUser() {
+  try {
+    return await apiRequest("/auth/logout", { method: "POST" });
+  } finally {
+    clearAccessToken();
+  }
 }
 
 export function resendVerificationEmail(payload) {
